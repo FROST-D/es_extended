@@ -17,6 +17,8 @@ local LastLoadout   = {}
 local Pickups       = {}
 local isDead        = false
 
+local dropProp = "hei_prop_cash_crate_half_full"
+
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(xPlayer)
 	ESX.PlayerLoaded = true
@@ -326,10 +328,10 @@ AddEventHandler('esx:pickup', function(id, label, player)
 	local forward = GetEntityForwardVector(ped)
 	local x, y, z = table.unpack(coords + forward * -2.0)
 
-	ESX.Game.SpawnLocalObject('prop_money_bag_01', {
+	ESX.Game.SpawnLocalObject(dropProp, {
 		x = x,
 		y = y,
-		z = z - 2.0,
+		z = z,
 	}, function(obj)
 		SetEntityAsMissionEntity(obj, true, false)
 		PlaceObjectOnGroundProperly(obj)
@@ -529,38 +531,58 @@ end
 -- Pickups
 Citizen.CreateThread(function()
 	while true do
+		Citizen.Wait(0)		
+		-- NOT GOOD FOR PERFORMANCE WE ARE GONNA DO IT WITH A KEY
+		-- -- if there's no nearby pickups we can wait a bit to save performance
+		-- if next(Pickups) == nil then
+		-- 	Citizen.Wait(500)
+		-- end
 
-		Citizen.Wait(0)
+		-- for k,v in pairs(Pickups) do
 
-		local playerPed = PlayerPedId()
-		local coords    = GetEntityCoords(playerPed)
-		
-		-- if there's no nearby pickups we can wait a bit to save performance
-		if next(Pickups) == nil then
-			Citizen.Wait(500)
-		end
+		-- 	local distance = GetDistanceBetweenCoords(coords, v.coords.x, v.coords.y, v.coords.z, true)
+		-- 	local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
 
-		for k,v in pairs(Pickups) do
+		-- 	if distance <= 5.0 then
+		-- 		ESX.Game.Utils.DrawText3D({
+		-- 			x = v.coords.x,
+		-- 			y = v.coords.y,
+		-- 			z = v.coords.z + 0.25
+		-- 		}, v.label)
+		-- 	end
 
-			local distance = GetDistanceBetweenCoords(coords, v.coords.x, v.coords.y, v.coords.z, true)
-			local closestPlayer, closestDistance = ESX.Game.GetClosestPlayer()
+		-- 	if (closestDistance == -1 or closestDistance > 3) and distance <= 1.0 and not v.inRange and not IsPedSittingInAnyVehicle(playerPed) then
+		-- 		TriggerServerEvent('esx:onPickup', v.id)
+		-- 		PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
+		-- 		v.inRange = true
+		-- 	end
 
-			if distance <= 5.0 then
-				ESX.Game.Utils.DrawText3D({
-					x = v.coords.x,
-					y = v.coords.y,
-					z = v.coords.z + 0.25
-				}, v.label)
+		-- end
+		--* NOT GOOD FOR PERFORMANCE WE ARE GONNA DO IT WITH A KEY
+
+		-- local playerPed = PlayerPedId()
+		-- local coords    = GetEntityCoords(playerPed)
+		-- local obj = GetClosestObjectOfType(coords,1.0,GetHashKey(dropProp),false,false,false)
+		-- if (obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed)) then
+		-- 	SetTextComponentFormat('STRING')
+		-- 	AddTextComponentString("PRESS ~INPUT_CONTEXT~ TO PICKUP AND GO FUCK YOURSELF")
+		-- 	DisplayHelpTextFromStringLabel(0, 0, 1, -1)
+		-- end
+		if IsControlJustReleased(1,38) then
+			local playerPed = PlayerPedId()
+			local coords    = GetEntityCoords(playerPed)
+			local obj = GetClosestObjectOfType(coords,1.0,GetHashKey(dropProp),false,false,false)
+			if (obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed)) then
+				for k,v in pairs(Pickups) do
+					if(v.obj == obj) then 
+						TriggerServerEvent('esx:onPickup', v.id)
+					 	PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
+						break
+					end
+				end
 			end
-
-			if (closestDistance == -1 or closestDistance > 3) and distance <= 1.0 and not v.inRange and not IsPedSittingInAnyVehicle(playerPed) then
-				TriggerServerEvent('esx:onPickup', v.id)
-				PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
-				v.inRange = true
-			end
-
+			Citizen.Wait(500)	--spam
 		end
-
 	end
 end)
 

@@ -337,6 +337,11 @@ AddEventHandler('esx:giveInventoryItem', function(target, type, itemName, itemCo
 	end
 end)
 
+RegisterServerEvent('esx:createPickupTest')
+AddEventHandler('esx:createPickupTest', function()
+	ESX.CreatePickup('item_standard', 'lockpick', 1, 'STO CAZZO', source)
+end)
+
 RegisterServerEvent('esx:removeInventoryItem')
 AddEventHandler('esx:removeInventoryItem', function(type, itemName, itemCount)
 	local _source = source
@@ -348,6 +353,11 @@ AddEventHandler('esx:removeInventoryItem', function(type, itemName, itemCount)
 		else
 			local xPlayer = ESX.GetPlayerFromId(source)
 			local xItem = xPlayer.getInventoryItem(itemName)
+			print("DEBUG esx:removeInventoryItem")
+			print(type)
+			print(itemName)
+			print(itemCount)
+			print(xItem)
 
 			if (itemCount > xItem.count or xItem.count < 1) then
 				TriggerClientEvent('esx:showNotification', _source, _U('imp_invalid_quantity'))
@@ -444,6 +454,7 @@ RegisterServerEvent('esx:onPickup')
 AddEventHandler('esx:onPickup', function(id)
 	local _source = source
 	local pickup  = ESX.Pickups[id]
+	pickup = pickup[1]
 	local xPlayer = ESX.GetPlayerFromId(_source)
 
 	if pickup.type == 'item_standard' then

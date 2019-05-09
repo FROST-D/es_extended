@@ -165,11 +165,19 @@ end
 ESX.CreatePickup = function(type, name, count, label, player)
 	local pickupId = (ESX.PickupId == 65635 and 0 or ESX.PickupId + 1)
 
-	ESX.Pickups[pickupId] = {
+	-- ESX.Pickups[pickupId] = {
+	-- 	type  = type,
+	-- 	name  = name,
+	-- 	count = count
+	-- }
+	local item = {
 		type  = type,
 		name  = name,
 		count = count
 	}
+
+	ESX.Pickups[pickupId].insert(item)
+	
 
 	TriggerClientEvent('esx:pickup', -1, pickupId, label, player)
 	ESX.PickupId = pickupId

@@ -1,5 +1,5 @@
 Config                      = {}
-Config.Locale               = 'fr'
+Config.Locale               = 'en'
 
 Config.Accounts             = { 'bank', 'black_money' }
 Config.AccountLabels        = { bank = _U('bank'), black_money = _U('black_money') }
@@ -12,4 +12,4 @@ Config.EnableHud            = true -- enable the default hud? Display current jo
 Config.PaycheckInterval     = 7 * 60000
 Config.MaxPlayers           = GetConvarInt('sv_maxclients', 32)
 
-Config.EnableDebug          = false
+Config.EnableDebug          = true
