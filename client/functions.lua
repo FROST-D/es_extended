@@ -1233,10 +1233,10 @@ ESX.ShowInventory = function()
 				if IsPedSittingInAnyVehicle(playerPed) then
 					return
 				end
-
+				local coords    = GetEntityCoords(playerPed)
 				if type == 'item_weapon' then
 
-					TriggerServerEvent('esx:removeInventoryItem', type, item)
+					TriggerServerEvent('esx:removeInventoryItem', type, item, nil, coords)
 					menu1.close()
 
 				else -- type: item_standard
@@ -1249,7 +1249,7 @@ ESX.ShowInventory = function()
 						if quantity == nil then
 							ESX.ShowNotification(_U('amount_invalid'))
 						else
-							TriggerServerEvent('esx:removeInventoryItem', type, item, quantity)
+							TriggerServerEvent('esx:removeInventoryItem', type, item, quantity, coords)
 							menu2.close()
 							menu1.close()
 						end

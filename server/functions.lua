@@ -164,7 +164,8 @@ end
 
 ESX.CreatePickup = function(type, name, count, label, player, coords)
 	--local pickupId = (ESX.PickupId == 65635 and 0 or ESX.PickupId + 1)
-	local pickupId = tostring(coords)
+	local x , y , z = table.unpack(coords)
+	local pickupId = tostring(math.floor(x)) .. tostring(math.floor(y)) .. tostring(math.floor(z)) -- lasciamo perdere le logiche di sta roba
 	-- ESX.Pickups[pickupId] = {
 	-- 	type  = type,
 	-- 	name  = name,

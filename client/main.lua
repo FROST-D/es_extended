@@ -575,8 +575,8 @@ Citizen.CreateThread(function()
 			local coords    = GetEntityCoords(playerPed)
 			local obj = GetClosestObjectOfType(coords,0.5,GetHashKey(dropProp),false,false,false)
 			if (obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed)) then
-				local coord = GetEntityCoords(obj)
-				TriggerServerEvent('esx:onPickup', coord)
+				-- dio cane e ci sta
+				TriggerServerEvent('esx:onPickup', coords)
 				PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)				
 			end
 			Citizen.Wait(500)	--spam
