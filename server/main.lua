@@ -351,8 +351,9 @@ RegisterServerEvent('esx:removeInventoryItem')
 AddEventHandler('esx:removeInventoryItem', function(type, itemName, itemCount, coords)
 	local _source = source
 	local _coords = coords
-	if (not _coords == nil)
+	if (not _coords == nil) then
 		_coords    = GetEntityCoords(_source)
+	end
 	print("ENTITY COORDS")
 	print (_coords)
 	if type == 'item_standard' then
@@ -462,6 +463,7 @@ end)
 RegisterServerEvent('esx:onPickup')
 AddEventHandler('esx:onPickup', function(coords)
 	local _source = source
+	local id = tostring(coords)
 	local pickupTable = ESX.Pickups[id]
 	local pickup = pickupTable[1]
 	local xPlayer = ESX.GetPlayerFromId(_source)
