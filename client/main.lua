@@ -17,7 +17,7 @@ local LastLoadout   = {}
 local Pickups       = {}
 local isDead        = false
 
-local dropProp = "hei_prop_cash_crate_half_full"
+local dropProp = "xm_prop_x17_bag_01a"
 
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(xPlayer)
@@ -322,12 +322,8 @@ AddEventHandler('esx:spawnObject', function(model)
 end)
 
 RegisterNetEvent('esx:pickup')
-AddEventHandler('esx:pickup', function(id, label, player)
-	local ped     = GetPlayerPed(GetPlayerFromServerId(player))
-	local coords  = GetEntityCoords(ped)
-	local forward = GetEntityForwardVector(ped)
-	local x, y, z = table.unpack(coords + forward * -2.0)
-
+AddEventHandler('esx:pickup', function(id, label, player, coords)
+	local x,y,z = table.unpack(coords)
 	ESX.Game.SpawnLocalObject(dropProp, {
 		x = x,
 		y = y,
@@ -335,6 +331,12 @@ AddEventHandler('esx:pickup', function(id, label, player)
 	}, function(obj)
 		SetEntityAsMissionEntity(obj, true, false)
 		PlaceObjectOnGroundProperly(obj)
+		SetEntityCollision(obj,false,false) --working
+		SetEntityDynamic(obj, false)
+		SetEntityRecordsCollisions(obj, false)
+		SetEntityCanBeDamaged(obj, false)
+		SetEntityHasGravity(obj, false)
+		FreezeEntityPosition(obj, true)
 
 		Pickups[id] = {
 			id = id,
@@ -573,13 +575,9 @@ Citizen.CreateThread(function()
 			local coords    = GetEntityCoords(playerPed)
 			local obj = GetClosestObjectOfType(coords,0.5,GetHashKey(dropProp),false,false,false)
 			if (obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed)) then
-				for k,v in pairs(Pickups) do
-					if(v.obj == obj) then 
-						TriggerServerEvent('esx:onPickup', v.id)
-					 	PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
-						break
-					end
-				end
+				local coord = GetEntityCoords(obj)
+				TriggerServerEvent('esx:onPickup', coord)
+				PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)				
 			end
 			Citizen.Wait(500)	--spam
 		end
