@@ -458,10 +458,11 @@ end)
 RegisterServerEvent('esx:onPickup')
 AddEventHandler('esx:onPickup', function(id)
 	local _source = source
-	local pickup  = ESX.Pickups[id]
-	pickup = pickup[1]
+	local pickupTable = ESX.Pickups[id]
+	local pickup = pickupTable[1]
 	local xPlayer = ESX.GetPlayerFromId(_source)
-
+	print(pickupTable)
+	print(pickup.name)
 	if pickup.type == 'item_standard' then
 
 		local item      = xPlayer.getInventoryItem(pickup.name)

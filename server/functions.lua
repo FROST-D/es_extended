@@ -176,7 +176,8 @@ ESX.CreatePickup = function(type, name, count, label, player)
 		count = count
 	}
 
-	ESX.Pickups[pickupId].insert(item)
+	ESX.Pickups[pickupId] = {}
+	table.insert(ESX.Pickups[pickupId],item)
 	
 
 	TriggerClientEvent('esx:pickup', -1, pickupId, label, player)

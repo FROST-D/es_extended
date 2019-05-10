@@ -571,7 +571,7 @@ Citizen.CreateThread(function()
 		if IsControlJustReleased(1,38) then
 			local playerPed = PlayerPedId()
 			local coords    = GetEntityCoords(playerPed)
-			local obj = GetClosestObjectOfType(coords,1.0,GetHashKey(dropProp),false,false,false)
+			local obj = GetClosestObjectOfType(coords,0.5,GetHashKey(dropProp),false,false,false)
 			if (obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed)) then
 				for k,v in pairs(Pickups) do
 					if(v.obj == obj) then 
