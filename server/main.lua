@@ -352,7 +352,7 @@ AddEventHandler('esx:removeInventoryItem', function(type, itemName, itemCount, c
 	local _source = source
 	local _coords = coords
 	if (not _coords == nil) then
-		_coords    = GetEntityCoords(GetPlayerPed(_source)
+		_coords    = GetEntityCoords(GetPlayerPed(_source))
 	end
 	print("ENTITY COORDS")
 	print (_coords)
