@@ -72,6 +72,7 @@ AddEventHandler('playerSpawned', function()
 	end
 
 	TriggerEvent('esx:restoreLoadout') -- restore loadout
+	TriggerServerEvent('esx:restorePickups') -- restore loadout
 
 	LoadoutLoaded = true
 	PlayerSpawned = true
@@ -341,8 +342,6 @@ AddEventHandler('esx:pickup', function(id, label, player, coords)
 		Pickups[id] = {
 			id = id,
 			obj = obj,
-			label = label,
-			inRange = false,
 			coords = {
 				x = x,
 				y = y,
@@ -573,9 +572,10 @@ Citizen.CreateThread(function()
 		if IsControlJustReleased(1,38) then
 			local playerPed = PlayerPedId()
 			local coords    = GetEntityCoords(playerPed)
-			local obj = GetClosestObjectOfType(coords,0.5,GetHashKey(dropProp),false,false,false)
+			local obj = GetClosestObjectOfType(coords,1.0,GetHashKey(dropProp),false,false,false)
 			if (obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed)) then
 				-- dio cane e ci sta
+				print("LOOKING FOR OBJECT ID:" .. genCoordId(coords))
 				TriggerServerEvent('esx:onPickup', coords)
 				PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)				
 			end

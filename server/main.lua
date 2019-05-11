@@ -342,8 +342,12 @@ AddEventHandler('esx:giveInventoryItem', function(target, type, itemName, itemCo
 	end
 end)
 
-RegisterServerEvent('esx:createPickupTest')
-AddEventHandler('esx:createPickupTest', function(coords)
+RegisterServerEvent('esx:createPickupTestLockpick')
+AddEventHandler('esx:createPickupTestLockpick', function(coords)
+	print("TEST ITEM WILL SPAWN AT COORD")
+	print(coords)
+	local pickupId = genCoordId(coords)
+	local pickupTable = ESX.Pickups[id]
 	ESX.CreatePickup('item_standard', 'lockpick', 1, 'STO CAZZO', source, coords)
 end)
 
@@ -461,39 +465,66 @@ end)
 RegisterServerEvent('esx:onPickup')
 AddEventHandler('esx:onPickup', function(coords)
 	local _source = source
-	local id = tostring(math.floor(coords.x)) .. tostring(math.floor(coords.y)) .. tostring(math.floor(coords.z)) -- lasciamo perdere le logiche di sta roba
+	local id = genCoordId(coords) -- lasciamo perdere le logiche di sta roba
 	local pickupTable = ESX.Pickups[id]
-	local pickup = pickupTable[1]
 	local xPlayer = ESX.GetPlayerFromId(_source)
+	print("onpickup " .. id)
+	if pickupTable ~= nil and pickupTable ~= 0 then
+		local removedItems = 0
+		local processedItems = 0
+	
+		for k,pickup in pairs(pickupTable.items) do
+			processedItems = processedItems + 1
+			print("PICKING UP " .. pickup.name)
+			if pickup.type == 'item_standard' then
+		
+				local item      = xPlayer.getInventoryItem(pickup.name)
+				local canTake   = ((item.limit == -1) and (pickup.count)) or ((item.limit - item.count > 0) and (item.limit - item.count)) or 0
+				local total     = pickup.count < canTake and pickup.count or canTake
+				local remaining = pickup.count - total
 
-	if pickup.type == 'item_standard' then
+				print("canTake : " .. canTake)
+				print("total : " .. total)
+				print("remaining : " .. remaining)
 
-		local item      = xPlayer.getInventoryItem(pickup.name)
-		local canTake   = ((item.limit == -1) and (pickup.count)) or ((item.limit - item.count > 0) and (item.limit - item.count)) or 0
-		local total     = pickup.count < canTake and pickup.count or canTake
-		local remaining = pickup.count - total
 
-		TriggerClientEvent('esx:removePickup', -1, id)
-
-		if total > 0 then
-			xPlayer.addInventoryItem(pickup.name, total)
+				if total > 0 then
+					xPlayer.addInventoryItem(pickup.name, total)
+				end
+		
+				if remaining > 0 then
+					TriggerClientEvent('esx:showNotification', _source, _U('cannot_pickup_room', item.label))		
+					local pickupLabel = ('~y~%s~s~ [~b~%s~s~]'):format(item.label, remaining)
+					ESX.OverwritePickup(id,'item_standard', pickup.name, remaining,pickupLabel, _source)
+				else
+					removedItems = removedItems + 1
+					pickupTable.items[k] = nil
+				end
+			elseif pickup.type == 'item_money' then
+				xPlayer.addMoney(pickup.count)
+				removedItems = removedItems + 1
+				pickupTable.items[k] = nil
+			elseif pickup.type == 'item_account' then
+				xPlayer.addAccountMoney(pickup.name, pickup.count)
+				removedItems = removedItems + 1
+				pickupTable.items[k] = nil
+			end
 		end
-
-		if remaining > 0 then
-			TriggerClientEvent('esx:showNotification', _source, _U('cannot_pickup_room', item.label))
-
-			local pickupLabel = ('~y~%s~s~ [~b~%s~s~]'):format(item.label, remaining)
-			ESX.CreatePickup('item_standard', pickup.name, remaining, pickupLabel, _source,coords)
+		if removedItems == processedItems then
+			TriggerClientEvent('esx:removePickup', -1, id)
+			ESX.Pickups[id] = nil
 		end
-
-	elseif pickup.type == 'item_money' then
-		TriggerClientEvent('esx:removePickup', -1, id)
-		xPlayer.addMoney(pickup.count)
-	elseif pickup.type == 'item_account' then
-		TriggerClientEvent('esx:removePickup', -1, id)
-		xPlayer.addAccountMoney(pickup.name, pickup.count)
 	end
 end)
+
+RegisterServerEvent('esx:restorePickups')
+AddEventHandler('esx:restorePickups', function()
+	local _source = source
+	for pickupId,pickupTable in pairs(ESX.Pickups) do
+		ESX.RestorePickup(pickupId, _source, pickupTable.coords)			
+	end
+end)
+
 
 ESX.RegisterServerCallback('esx:getPlayerData', function(source, cb)
 	local xPlayer = ESX.GetPlayerFromId(source)

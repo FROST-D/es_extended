@@ -162,29 +162,73 @@ ESX.GetItemLabel = function(item)
 	end
 end
 
-ESX.CreatePickup = function(type, name, count, label, player, coords)
-	--local pickupId = (ESX.PickupId == 65635 and 0 or ESX.PickupId + 1)
-	local x , y , z = table.unpack(coords)
-	local pickupId = tostring(math.floor(x)) .. tostring(math.floor(y)) .. tostring(math.floor(z)) -- lasciamo perdere le logiche di sta roba
-	-- ESX.Pickups[pickupId] = {
-	-- 	type  = type,
-	-- 	name  = name,
-	-- 	count = count
-	-- }
-
+ESX.OverwritePickup = function(pickupId, type, name, count, label, player)
+	local pickup = ESX.Pickups[pickupId]
 	local item = {
 		type  = type,
 		name  = name,
-		count = count
+		count = count,
+		label = label
 	}
 
-	ESX.Pickups[pickupId] = {}
-	table.insert(ESX.Pickups[pickupId],item)
-	
+	if pickup ~= nil and pickup ~= 0 then
+		pickup.items[name] = item	
+		ESX.Pickups[pickupId] = pickup
+		ESX.PickupId = pickupId		
+	end
+end
 
-	TriggerClientEvent('esx:pickup', -1, pickupId, label, player, coords)
+ESX.CreatePickup = function(type, name, count, label, player, coords)
+	local pickupId = genCoordId(coords)  -- lasciamo perdere le logiche di sta roba
+	local pickup = ESX.Pickups[pickupId]
+	local item = {
+		type  = type,
+		name  = name,
+		count = count,
+		label = label
+	}
+
+	if pickup ~= nil and pickup ~= 0 then
+		print("PICKUP EXIST ADD ITEM " .. name)
+		local _item = pickup.items[name]
+		print(_item)
+		if _item ~= nil and _item ~= 0 then
+			print("ITEM EXIST ADD ITEM COUNT")
+			item.count = item.count + _item.count 		
+			print(item.count)
+			pickup.items[name] = item	
+		else
+			print("ITEM NOT EXIST CREATE")
+			pickup.items[name] = item
+		end
+		ESX.Pickups[pickupId] = pickup
+		ESX.PickupId = pickupId
+	else
+		pickup = {
+			coords = {
+				x = coords.x,
+				y = coords.y,
+				z = coords.z
+			},
+			items = {}
+		}
+		pickup.items[name] = item
+		print("NEW PICKUP ID " .. pickupId)
+		print("COORDS ")
+		print(coords)
+		ESX.Pickups[pickupId] = pickup
+		print(ESX.Pickups[pickupId])
+		TriggerClientEvent('esx:pickup', -1, pickupId, label, player, coords)
+		ESX.PickupId = pickupId
+	end
+end
+
+ESX.RestorePickup = function(pickupId,player, coords)
+	print("RestorePickup : " .. pickupId)
+	TriggerClientEvent('esx:pickup', player, pickupId, player, coords)
 	ESX.PickupId = pickupId
 end
+
 
 ESX.DoesJobExist = function(job, grade)
 	grade = tostring(grade)
