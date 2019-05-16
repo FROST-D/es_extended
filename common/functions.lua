@@ -33,6 +33,10 @@ ESX.GetWeaponList = function()
 	return Config.Weapons
 end
 
+ESX.GetAmmoList = function()
+	return Config.Ammos
+end
+
 ESX.GetWeaponLabel = function(weaponName)
 	weaponName = string.upper(weaponName)
 	local weapons = ESX.GetWeaponList()
@@ -43,6 +47,40 @@ ESX.GetWeaponLabel = function(weaponName)
 		end
 	end
 end
+
+ESX.GetWeaponAmmo = function(weaponName)
+	weaponName = string.upper(weaponName)
+	local weapons = ESX.GetWeaponList()
+
+	for i=1, #weapons, 1 do
+		if weapons[i].name == weaponName then
+			return weapons[i].ammo
+		end
+	end
+end
+
+
+ESX.GetAmmoLabel = function(ammoName)
+	ammoName = string.upper(ammoName)
+	local ammos = ESX.GetAmmoList()
+
+	if ammos[ammoName] then
+		return ammos[ammoName].label		
+	else
+		return ammoName
+	end
+end
+
+ESX.GetAmmoWeapons = function(ammoName)
+	local ammos = ESX.GetAmmoList()
+
+	if ammos[ammoName] then
+		return ammos[ammoName].weapons		
+	else
+		return ammoName
+	end
+end
+
 
 ESX.GetWeaponComponent = function(weaponName, weaponComponent)
 	weaponName = string.upper(weaponName)

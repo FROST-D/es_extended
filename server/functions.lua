@@ -140,6 +140,8 @@ ESX.GetPlayerFromId = function(source)
 	return ESX.Players[tonumber(source)]
 end
 
+
+
 ESX.GetPlayerFromIdentifier = function(identifier)
 	for k,v in pairs(ESX.Players) do
 		if v.identifier == identifier then
@@ -152,8 +154,19 @@ ESX.RegisterUsableItem = function(item, cb)
 	ESX.UsableItemsCallbacks[item] = cb
 end
 
-ESX.UseItem = function(source, item)
-	ESX.UsableItemsCallbacks[item](source)
+ESX.RegisterUsableItemType = function(type, cb)
+	ESX.UsableItemsCallbacks[type] = cb
+end
+
+ESX.UseItem = function(source, item, type, count)
+	print("USE ITEM")
+	print(item)
+	print(type)
+	if ESX.UsableItemsCallbacks[item] then
+		ESX.UsableItemsCallbacks[item](source)
+	elseif ESX.UsableItemsCallbacks[type] then
+		ESX.UsableItemsCallbacks[type](source,item,count)
+	end
 end
 
 ESX.GetItemLabel = function(item)
@@ -162,68 +175,86 @@ ESX.GetItemLabel = function(item)
 	end
 end
 
-ESX.OverwritePickup = function(pickupId, type, name, count, label, player)
+ESX.GetPickups = function()
+	return ESX.Pickups
+end
+
+ESX.GetPickupInventory = function(player,coords)
+	local pickupId = genCoordId(coords)
 	local pickup = ESX.Pickups[pickupId]
-	local item = {
-		type  = type,
-		name  = name,
-		count = count,
-		label = label
+	local inventory = {}
+	local money = 0
+	local weapons = {}
+	local accounts = {}
+	if pickup ~= nil and pickup ~= 0 then
+		for k,item in pairs(pickup.items) do
+			if item.type == 'item_standard' then		
+				table.insert(inventory,item)
+			elseif item.type == 'item_money' then
+				money = money + item.count
+			elseif item.type == 'item_account' then
+				table.insert(accounts,item)
+			elseif item.type == 'item_weapon' then
+				table.insert(weapons,item)
+			end
+		end
+	end
+
+
+	return {
+		inventory = inventory,
+		money = money,
+		accounts = accounts,
+		weapons = weapons
 	}
+end
+
+-- overwrite item count inside a pickup bag
+ESX.OverwritePickup = function(pickupId, name, count, player)
+	local pickup = ESX.Pickups[pickupId]
 
 	if pickup ~= nil and pickup ~= 0 then
-		pickup.items[name] = item	
+		pickup.items[name].count = count	
 		ESX.Pickups[pickupId] = pickup
 		ESX.PickupId = pickupId		
 	end
 end
 
+-- create and add items to pickups bag
 ESX.CreatePickup = function(type, name, count, label, player, coords)
 	local pickupId = genCoordId(coords)  -- lasciamo perdere le logiche di sta roba
 	local pickup = ESX.Pickups[pickupId]
 	local item = {
 		type  = type,
 		name  = name,
-		count = count,
-		label = label
+		label = label,
+		count = count
 	}
 
 	if pickup ~= nil and pickup ~= 0 then
-		print("PICKUP EXIST ADD ITEM " .. name)
 		local _item = pickup.items[name]
-		print(_item)
 		if _item ~= nil and _item ~= 0 then
-			print("ITEM EXIST ADD ITEM COUNT")
-			item.count = item.count + _item.count 		
-			print(item.count)
+			item.count = item.count + _item.count
 			pickup.items[name] = item	
 		else
-			print("ITEM NOT EXIST CREATE")
 			pickup.items[name] = item
 		end
 		ESX.Pickups[pickupId] = pickup
 		ESX.PickupId = pickupId
 	else
 		pickup = {
-			coords = {
-				x = coords.x,
-				y = coords.y,
-				z = coords.z
-			},
+			coords = coords,
 			items = {}
 		}
 		pickup.items[name] = item
-		print("NEW PICKUP ID " .. pickupId)
-		print("COORDS ")
-		print(coords)
 		ESX.Pickups[pickupId] = pickup
-		print(ESX.Pickups[pickupId])
-		TriggerClientEvent('esx:pickup', -1, pickupId, label, player, coords)
+		TriggerClientEvent('esx:pickup', -1, pickupId, player, coords)
 		ESX.PickupId = pickupId
 	end
 end
 
-ESX.RestorePickup = function(pickupId,player, coords)
+-- restore bag for connecting clients
+ESX.RestorePickup = function(pickupId, player, coords)
 	print("RestorePickup : " .. pickupId)
 	TriggerClientEvent('esx:pickup', player, pickupId, player, coords)
 	ESX.PickupId = pickupId

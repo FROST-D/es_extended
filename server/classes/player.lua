@@ -383,18 +383,65 @@ function CreateExtendedPlayer(player, accounts, inventory, job, loadout, name, l
 
 	self.addWeapon = function(weaponName, ammo)
 		local weaponLabel = ESX.GetWeaponLabel(weaponName)
-
 		if not self.hasWeapon(weaponName) then
 			table.insert(self.loadout, {
 				name = weaponName,
 				ammo = ammo,
 				label = weaponLabel,
+				usable = true,
 				components = {}
 			})
 		end
 
 		TriggerClientEvent('esx:addWeapon', self.source, weaponName, ammo)
 		TriggerClientEvent('esx:addInventoryItem', self.source, {label = weaponLabel}, 1)
+	end
+	
+	self.addAmmo = function(ammoName, count)
+		local ammoLabel = ESX.GetAmmoLabel(ammoName)
+		local weaponNames = ESX.GetAmmoWeapons(ammoName)
+		for i=1, #weaponNames, 1 do
+			if self.hasWeapon(weaponNames[i]) then
+				for i=1, #self.loadout, 1 do
+					if self.loadout[i].name == weaponNames[i] then
+						self.loadout[i].ammo = self.loadout[i].ammo + count
+					end
+				end
+				TriggerClientEvent('esx:addAmmo', self.source, weaponNames[i], count)
+				TriggerClientEvent('esx:removeInventoryItem', self.source, {label = ammoLabel}, count)
+				break
+			end
+		end
+	end
+	
+	self.removeAmmo = function(ammoName, count)
+		local ammoLabel = ESX.GetAmmoLabel(ammoName)
+		local weaponNames = ESX.GetAmmoWeapons(ammoName)
+
+		for i=1, #weaponNames, 1 do
+			if self.hasWeapon(weaponNames[i]) then
+				for i=1, #self.loadout, 1 do
+					if self.loadout[i].name == weaponNames[i] then
+						self.loadout[i].ammo = self.loadout[i].ammo - count
+					end
+				end
+				TriggerClientEvent('esx:removeAmmo', self.source, weaponName, count)
+				TriggerClientEvent('esx:addInventoryItem', self.source, {label = ammoLabel}, count)
+				break
+			end
+		end
+	end
+
+	self.removeAmmoFromWeapon = function(weaponName, count)
+		if self.hasWeapon(weaponName) then
+			for i=1, #self.loadout, 1 do
+				if self.loadout[i].name == weaponName then
+					self.loadout[i].ammo = self.loadout[i].ammo - count
+				end
+			end
+			TriggerClientEvent('esx:removeAmmo', self.source, weaponName, count)
+			--TriggerClientEvent('esx:addInventoryItem', self.source, {label = ammoLabel}, count)
+		end
 	end
 
 	self.addWeaponComponent = function(weaponName, weaponComponent)
@@ -411,6 +458,24 @@ function CreateExtendedPlayer(player, accounts, inventory, job, loadout, name, l
 
 	self.removeWeapon = function(weaponName, ammo)
 		local weaponLabel
+
+		-- we have to check if it is the last weapon of type to unload ammo
+		local ammoName = ESX.GetWeaponAmmo(weaponName)
+		print("ammoName")
+		print(ammoName)
+		local ammoWeapons = Config.Ammos[ammoName].weapons
+		local weapon = nil
+		for i=1, #ammoWeapons, 1 do
+			if self.hasWeapon(ammoWeapons[i]) and ammoWeapons[i] ~= weaponName then
+				weapon = ammoWeapons[i]
+				break
+			end
+		end	
+		-- we do not have weapon left that can use this tipe of ammo
+		if (weapon == nil) then
+			self.addInventoryItem(ammoName, self.getAmmo(weaponName))	
+			self.removeAmmoFromWeapon(weaponName, ammo)	
+		end
 
 		for i=1, #self.loadout, 1 do
 			if self.loadout[i].name == weaponName then
@@ -482,6 +547,18 @@ function CreateExtendedPlayer(player, accounts, inventory, job, loadout, name, l
 		end
 
 		return nil
+	end
+
+	self.getAmmo = function(weaponName)
+		print("getAmmo")
+		for i=1, #self.loadout, 1 do
+			print(self.loadout[i].name)
+			print(self.loadout[i].ammo)
+
+			if self.loadout[i].name == weaponName then
+				return self.loadout[i].ammo
+			end
+		end
 	end
 
 	return self

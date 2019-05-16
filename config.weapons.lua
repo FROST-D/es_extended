@@ -1,3 +1,14 @@
+Config.Ammos = {
+	["AMMO_PISTOL"] = {
+		label = "Mun.Pistola",
+		weapons = {
+			"WEAPON_PISTOL",
+			"WEAPON_COMBATPISTOL"
+		},
+		max = 250
+	}
+}
+
 Config.Weapons = {
 
 	{
@@ -45,7 +56,9 @@ Config.Weapons = {
 			{ name = 'flashlight', label = _U('component_flashlight'), hash = GetHashKey('COMPONENT_AT_PI_FLSH') },
 			{ name = 'suppressor', label = _U('component_suppressor'), hash = GetHashKey('COMPONENT_AT_PI_SUPP_02') },
 			{ name = 'luxary_finish', label = _U('component_luxary_finish'), hash = GetHashKey('COMPONENT_PISTOL_VARMOD_LUXE') }
-		}
+		},
+		ammo = "AMMO_PISTOL",
+		maxammo = 250
 	},
 
 	{
@@ -57,7 +70,9 @@ Config.Weapons = {
 			{ name = 'flashlight', label = _U('component_flashlight'), hash = GetHashKey('COMPONENT_AT_PI_FLSH') },
 			{ name = 'suppressor', label = _U('component_suppressor'), hash = GetHashKey('COMPONENT_AT_PI_SUPP') },
 			{ name = 'luxary_finish', label = _U('component_luxary_finish'), hash = GetHashKey('COMPONENT_COMBATPISTOL_VARMOD_LOWRIDER') }
-		}
+		},
+		ammo = "AMMO_PISTOL",
+		maxammo = 250
 	},
 
 	{

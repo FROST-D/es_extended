@@ -644,6 +644,17 @@ ESX.Game.GetClosestPed = function(coords, ignoreList)
 	return closestPed, closestDistance
 end
 
+ESX.Game.GetClosestPickup = function()
+	local playerPed 	= PlayerPedId()
+	local coords   		= GetEntityCoords(playerPed)
+	local obj 			= GetClosestObjectOfType(coords,0.8,GetHashKey(Config.DropProp),false,false,false)
+
+	if obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed) then
+		return genCoordId(coords)
+	end
+end
+
+
 ESX.Game.GetVehicleProperties = function(vehicle)
 	local color1, color2 = GetVehicleColours(vehicle)
 	local pearlescentColor, wheelColor = GetVehicleExtraColours(vehicle)
@@ -1061,10 +1072,18 @@ ESX.ShowInventory = function()
 
 	for i=1, #ESX.PlayerData.inventory, 1 do
 		if ESX.PlayerData.inventory[i].count > 0 then
+			-- this code must be changed further
+			local _na = ESX.PlayerData.inventory[i].name
+			local _type = 'item_standard'
+			if _na:sub(1, 7) == "WEAPON_" then
+				_type = "item_weapon_packed"
+			elseif _na:sub(1, 5) == "AMMO_" then
+				_type = "item_ammo"
+			end
 			table.insert(elements, {
 				label     = ESX.PlayerData.inventory[i].label .. ' x' .. ESX.PlayerData.inventory[i].count,
 				count     = ESX.PlayerData.inventory[i].count,
-				type      = 'item_standard',
+				type      = _type,
 				value     = ESX.PlayerData.inventory[i].name,
 				usable    = ESX.PlayerData.inventory[i].usable,
 				rare      = ESX.PlayerData.inventory[i].rare,
@@ -1084,7 +1103,7 @@ ESX.ShowInventory = function()
 				type      = 'item_weapon',
 				value     = Config.Weapons[i].name,
 				ammo      = ammo,
-				usable    = false,
+				usable    = ESX.UsableItemsCallbacks['item_weapon'],
 				rare      = false,
 				canRemove = true
 			})

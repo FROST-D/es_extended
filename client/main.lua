@@ -17,8 +17,6 @@ local LastLoadout   = {}
 local Pickups       = {}
 local isDead        = false
 
-local dropProp = "xm_prop_x17_bag_01a"
-
 RegisterNetEvent('esx:playerLoaded')
 AddEventHandler('esx:playerLoaded', function(xPlayer)
 	ESX.PlayerLoaded = true
@@ -57,6 +55,8 @@ AddEventHandler('esx:playerLoaded', function(xPlayer)
 	else
 		TriggerEvent('es:setMoneyDisplay', 0.0)
 	end
+
+	TriggerServerEvent('esx:restorePickups') -- restore loadout
 end)
 
 AddEventHandler('playerSpawned', function()
@@ -72,7 +72,6 @@ AddEventHandler('playerSpawned', function()
 	end
 
 	TriggerEvent('esx:restoreLoadout') -- restore loadout
-	TriggerServerEvent('esx:restorePickups') -- restore loadout
 
 	LoadoutLoaded = true
 	PlayerSpawned = true
@@ -191,6 +190,28 @@ AddEventHandler('esx:addWeapon', function(weaponName, ammo)
 	--AddAmmoToPed(playerPed, weaponHash, ammo) possibly not needed
 end)
 
+RegisterNetEvent('esx:addAmmo')
+AddEventHandler('esx:addAmmo', function(weaponName, count)
+	local playerPed  = PlayerPedId()
+	local weaponHash = GetHashKey(weaponName)
+
+	AddAmmoToPed(playerPed, weaponHash, count) 
+end)
+
+RegisterNetEvent('esx:removeAmmo')
+AddEventHandler('esx:removeAmmo', function(weaponName, count)
+	local playerPed  = PlayerPedId()
+	local weaponHash = GetHashKey(weaponName)
+
+	if count then
+		local pedAmmo = GetAmmoInPedWeapon(playerPed, weaponHash)
+		local finalAmmo = math.floor(pedAmmo - count)
+		SetPedAmmo(playerPed, weaponHash, finalAmmo)
+	else
+		SetPedAmmo(playerPed, weaponHash, 0) -- remove leftover ammo
+	end
+end)
+
 RegisterNetEvent('esx:addWeaponComponent')
 AddEventHandler('esx:addWeaponComponent', function(weaponName, weaponComponent)
 	local playerPed  = PlayerPedId()
@@ -206,14 +227,6 @@ AddEventHandler('esx:removeWeapon', function(weaponName, ammo)
 	local weaponHash = GetHashKey(weaponName)
 
 	RemoveWeaponFromPed(playerPed, weaponHash)
-
-	if ammo then
-		local pedAmmo = GetAmmoInPedWeapon(playerPed, weaponHash)
-		local finalAmmo = math.floor(pedAmmo - ammo)
-		SetPedAmmo(playerPed, weaponHash, finalAmmo)
-	else
-		SetPedAmmo(playerPed, weaponHash, 0) -- remove leftover ammo
-	end
 end)
 
 
@@ -323,13 +336,17 @@ AddEventHandler('esx:spawnObject', function(model)
 end)
 
 RegisterNetEvent('esx:pickup')
-AddEventHandler('esx:pickup', function(id, label, player, coords)
-	local x,y,z = table.unpack(coords)
-	ESX.Game.SpawnLocalObject(dropProp, {
-		x = x,
-		y = y,
-		z = z,
-	}, function(obj)
+AddEventHandler('esx:pickup', function(id, player, coords)
+	print('esx:pickup')
+	print(roundToClosestInt(parseInt(coords.x),2) + 0.95)
+	print(roundToClosestInt(parseInt(coords.y),2) + 0.95)
+	print(roundToClosestInt(parseInt(coords.z),2) + 0.95)
+	local _coords = {
+		x = roundToClosestInt(parseInt(coords.x),2) + 0.95,
+		y = roundToClosestInt(parseInt(coords.y),2) + 0.95, 
+		z = coords.z
+	}
+	ESX.Game.SpawnLocalObject(Config.DropProp,_coords, function(obj)
 		SetEntityAsMissionEntity(obj, true, false)
 		PlaceObjectOnGroundProperly(obj)
 		SetEntityCollision(obj,false,false) --working
@@ -340,13 +357,8 @@ AddEventHandler('esx:pickup', function(id, label, player, coords)
 		FreezeEntityPosition(obj, true)
 
 		Pickups[id] = {
-			id = id,
-			obj = obj,
-			coords = {
-				x = x,
-				y = y,
-				z = z
-			}
+			coords = coords,
+			obj = obj
 		}
 	end)
 end)
@@ -458,7 +470,8 @@ Citizen.CreateThread(function()
 					name = weaponName,
 					ammo = ammo,
 					label = Config.Weapons[i].label,
-					components = weaponComponents
+					components = weaponComponents,
+					usable = true
 				})
 			else
 				if LastLoadout[weaponName] ~= nil then
@@ -479,17 +492,17 @@ Citizen.CreateThread(function()
 end)
 
 -- Menu interactions
-Citizen.CreateThread(function()
-	while true do
+-- Citizen.CreateThread(function()
+-- 	while true do
 
-		Citizen.Wait(0)
+-- 		Citizen.Wait(0)
 
-		if IsControlJustReleased(0, Keys['F2']) and IsInputDisabled(0) and not isDead and not ESX.UI.Menu.IsOpen('default', 'es_extended', 'inventory') then
-			ESX.ShowInventory()
-		end
+-- 		if IsControlJustReleased(0, Keys['F2']) and IsInputDisabled(0) and not isDead and not ESX.UI.Menu.IsOpen('default', 'es_extended', 'inventory') then
+-- 			ESX.ShowInventory()
+-- 		end
 
-	end
-end)
+-- 	end
+-- end)
 
 -- Dot above head
 if Config.ShowDotAbovePlayer then
@@ -569,10 +582,18 @@ Citizen.CreateThread(function()
 		-- 	AddTextComponentString("PRESS ~INPUT_CONTEXT~ TO PICKUP AND GO FUCK YOURSELF")
 		-- 	DisplayHelpTextFromStringLabel(0, 0, 1, -1)
 		-- end
+		local playerPed = PlayerPedId()
+		local coords    = GetEntityCoords(playerPed)
+		local obj = GetClosestObjectOfType(coords,0.8,GetHashKey(Config.DropProp),false,false,false)
+		if (obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed)) then
+			SetTextComponentFormat('STRING')
+			AddTextComponentString("PRESS ~INPUT_CONTEXT~ TO PICKUP AND GO FUCK YOURSELF")
+			DisplayHelpTextFromStringLabel(0, 0, 1, -1)
+		end
 		if IsControlJustReleased(1,38) then
 			local playerPed = PlayerPedId()
 			local coords    = GetEntityCoords(playerPed)
-			local obj = GetClosestObjectOfType(coords,1.0,GetHashKey(dropProp),false,false,false)
+			local obj = GetClosestObjectOfType(coords,0.8,GetHashKey(Config.DropProp),false,false,false)
 			if (obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed)) then
 				-- dio cane e ci sta
 				print("LOOKING FOR OBJECT ID:" .. genCoordId(coords))
@@ -582,6 +603,23 @@ Citizen.CreateThread(function()
 			Citizen.Wait(500)	--spam
 		end
 	end
+end)
+
+
+
+RegisterNetEvent('esx:equipWeapon')
+AddEventHandler('esx:equipWeapon', function(weapon)
+	PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
+end)
+
+RegisterNetEvent('esx:unequipWeapon')
+AddEventHandler('esx:unequipWeapon', function(weapon)
+	PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
+end)
+
+RegisterNetEvent('esx:equipAmmo')
+AddEventHandler('esx:equipAmmo', function(weapon)
+	PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)
 end)
 
 -- Last position

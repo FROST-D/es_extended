@@ -13,3 +13,5 @@ Config.PaycheckInterval     = 7 * 60000
 Config.MaxPlayers           = GetConvarInt('sv_maxclients', 32) -- set this value to 255 if you're running OneSync
 
 Config.EnableDebug          = true
+
+Config.DropProp             = "xm_prop_x17_bag_01a"
