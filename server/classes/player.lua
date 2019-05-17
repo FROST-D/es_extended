@@ -1,4 +1,4 @@
-function CreateExtendedPlayer(player, accounts, inventory, job, loadout, name, lastPosition)
+function CreateExtendedPlayer(player, accounts, inventory, job, loadout, name, lastPosition, loadoutAmmo)
 	local self = {}
 
 	self.player       = player
@@ -6,6 +6,7 @@ function CreateExtendedPlayer(player, accounts, inventory, job, loadout, name, l
 	self.inventory    = inventory
 	self.job          = job
 	self.loadout      = loadout
+	self.loadoutAmmo  = loadoutAmmo
 	self.name         = name
 	self.lastPosition = lastPosition
 
@@ -456,25 +457,30 @@ function CreateExtendedPlayer(player, accounts, inventory, job, loadout, name, l
 		TriggerClientEvent('esx:addWeaponComponent', self.source, weaponName, weaponComponent)
 	end
 
+	self.hasWeaponThatUseAmmo = function(weaponName,ammoName)
+		local ammoWeapons = ESX.GetAmmoWeapons(ammoName)
+		if ammoWeapons ~= nil then
+			for i=1, #ammoWeapons, 1 do
+				if self.hasWeapon(ammoWeapons[i]) and ammoWeapons[i] ~= weaponName then
+					return ammoWeapons[i]
+				end
+			end	
+		end
+		return nil
+	end	
+
 	self.removeWeapon = function(weaponName, ammo)
 		local weaponLabel
-
 		-- we have to check if it is the last weapon of type to unload ammo
-		local ammoName = ESX.GetWeaponAmmo(weaponName)
-		print("ammoName")
-		print(ammoName)
-		local ammoWeapons = Config.Ammos[ammoName].weapons
-		local weapon = nil
-		for i=1, #ammoWeapons, 1 do
-			if self.hasWeapon(ammoWeapons[i]) and ammoWeapons[i] ~= weaponName then
-				weapon = ammoWeapons[i]
-				break
+		local ammoName = ESX.GetAmmoNameByWeapon(weaponName)
+		if ammoName ~= nil then --this weapon has ammo
+			local sameCategoryWeaponName = self.hasWeaponThatUseAmmo(ammoName) 
+			if (sameCategoryWeaponName == nil) then
+				-- we do not have weapon left that can use this tipe of ammo
+				-- remove ammo and add it to inventory
+				self.addInventoryItem(ammoName, self.getAmmo(weaponName))	
+				self.removeAmmoFromWeapon(weaponName, 250)	
 			end
-		end	
-		-- we do not have weapon left that can use this tipe of ammo
-		if (weapon == nil) then
-			self.addInventoryItem(ammoName, self.getAmmo(weaponName))	
-			self.removeAmmoFromWeapon(weaponName, ammo)	
 		end
 
 		for i=1, #self.loadout, 1 do
@@ -550,11 +556,7 @@ function CreateExtendedPlayer(player, accounts, inventory, job, loadout, name, l
 	end
 
 	self.getAmmo = function(weaponName)
-		print("getAmmo")
 		for i=1, #self.loadout, 1 do
-			print(self.loadout[i].name)
-			print(self.loadout[i].ammo)
-
 			if self.loadout[i].name == weaponName then
 				return self.loadout[i].ammo
 			end

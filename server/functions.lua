@@ -159,9 +159,6 @@ ESX.RegisterUsableItemType = function(type, cb)
 end
 
 ESX.UseItem = function(source, item, type, count)
-	print("USE ITEM")
-	print(item)
-	print(type)
 	if ESX.UsableItemsCallbacks[item] then
 		ESX.UsableItemsCallbacks[item](source)
 	elseif ESX.UsableItemsCallbacks[type] then
@@ -177,6 +174,10 @@ end
 
 ESX.GetPickups = function()
 	return ESX.Pickups
+end
+
+ESX.GetPickup = function(pickupId)
+	return ESX.Pickups[pickupId]
 end
 
 ESX.GetPickupInventory = function(player,coords)
@@ -255,7 +256,6 @@ end
 
 -- restore bag for connecting clients
 ESX.RestorePickup = function(pickupId, player, coords)
-	print("RestorePickup : " .. pickupId)
 	TriggerClientEvent('esx:pickup', player, pickupId, player, coords)
 	ESX.PickupId = pickupId
 end

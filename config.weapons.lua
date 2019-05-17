@@ -9,6 +9,13 @@ Config.Ammos = {
 	}
 }
 
+Config.WeaponAmmo = {
+	["WEAPON_PISTOL"] = {
+		ammo = "AMMO_PISTOL",
+		max = 250
+	}
+}
+
 Config.Weapons = {
 
 	{

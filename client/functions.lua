@@ -648,9 +648,13 @@ ESX.Game.GetClosestPickup = function()
 	local playerPed 	= PlayerPedId()
 	local coords   		= GetEntityCoords(playerPed)
 	local obj 			= GetClosestObjectOfType(coords,0.8,GetHashKey(Config.DropProp),false,false,false)
-
+	local objCoords		= {
+		x = roundToClosestInt(parseInt(coords.x),2) + 0.95,
+		y = roundToClosestInt(parseInt(coords.y),2) + 0.95,
+		z = coords.z
+	}
 	if obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed) then
-		return genCoordId(coords)
+		return genCoordId(coords), objCoords
 	end
 end
 

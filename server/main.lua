@@ -7,6 +7,7 @@ AddEventHandler('es:playerLoaded', function(source, _player)
 		inventory    = {},
 		job          = {},
 		loadout      = {},
+		loadoutAmmo	 = {},
 		playerName   = GetPlayerName(_source),
 		lastPosition = nil
 	}
@@ -198,6 +199,11 @@ AddEventHandler('es:playerLoaded', function(source, _player)
 
 						-- Compatibility with old loadouts prior to components update
 						for k,v in ipairs(userData.loadout) do
+							local ammoName = ESX.GetWeaponAmmo2(v.name)
+							if ammoName ~= nil then
+								userData.loadoutAmmo[ammoName] = v.ammo
+							end
+
 							if v.components == nil then
 								v.components = {}
 							end
@@ -219,7 +225,7 @@ AddEventHandler('es:playerLoaded', function(source, _player)
 
 		-- Run Tasks
 		Async.parallel(tasks, function(results)
-			local xPlayer = CreateExtendedPlayer(player, userData.accounts, userData.inventory, userData.job, userData.loadout, userData.playerName, userData.lastPosition)
+			local xPlayer = CreateExtendedPlayer(player, userData.accounts, userData.inventory, userData.job, userData.loadout, userData.playerName, userData.lastPosition, userData.loadoutAmmo)
 
 			xPlayer.getMissingAccounts(function(missingAccounts)
 				if #missingAccounts > 0 then
@@ -370,8 +376,6 @@ end)
 
 RegisterServerEvent('esx:createPickupTestLockpick')
 AddEventHandler('esx:createPickupTestLockpick', function(coords)
-	print("TEST ITEM WILL SPAWN AT COORD")
-	print(coords)
 	local pickupId = genCoordId(coords)
 	local pickupTable = ESX.Pickups[id]
 	ESX.CreatePickup('item_standard', 'lockpick', 1, 'STO CAZZO', source, coords)
@@ -382,8 +386,6 @@ AddEventHandler('esx:removeInventoryItem', function(type, itemName, itemCount, c
 	local _source = source
 	local _coords = coords
 
-	print("ENTITY COORDS")
-	print (_coords)
 	if type == 'item_standard' or type == 'item_weapon_packed' or type == 'item_ammo' then
 
 		if itemCount == nil or itemCount < 1 then
@@ -391,13 +393,7 @@ AddEventHandler('esx:removeInventoryItem', function(type, itemName, itemCount, c
 		else
 			local xPlayer = ESX.GetPlayerFromId(source)
 			local xItem = xPlayer.getInventoryItem(itemName)
-			print("DEBUG esx:removeInventoryItem")
-			print(type)
-			print(itemName)
-			print(itemCount)
-			print(ESX.DumpTable(xItem))
-			print(xItem.label)
-			
+
 			if (itemCount > xItem.count) then
 				itemCount = xItem.count
 			end
@@ -464,12 +460,6 @@ AddEventHandler('esx:removeInventoryItem', function(type, itemName, itemCount, c
 			TriggerClientEvent('esx:showNotification', _source, _U('imp_invalid_quantity'))
 		else
 			local xItem = xPlayer.getInventoryItem(itemName)
-			print("DEBUG esx:removeInventoryItem")
-			print(type)
-			print(itemName)
-			print(itemCount)
-			print(ESX.DumpTable(xItem))
-			print(xItem.label)
 
 			if (xItem) then 
 				--we have a free weapon inside invetory
@@ -525,14 +515,12 @@ AddEventHandler('esx:onPickup', function(coords)
 	local id = genCoordId(coords) -- lasciamo perdere le logiche di sta roba
 	local pickupTable = ESX.Pickups[id]
 	local xPlayer = ESX.GetPlayerFromId(_source)
-	print("onpickup " .. id)
 	if pickupTable ~= nil and pickupTable ~= 0 then
 		local removedItems = 0
 		local processedItems = 0
 	
 		for k,pickup in pairs(pickupTable.items) do
 			processedItems = processedItems + 1
-			print("PICKING UP " .. pickup.name)
 			if pickup.type == 'item_standard' or pickup.type == 'item_weapon_packed' or pickup.type == 'item_ammo' then
 		
 				local item      = xPlayer.getInventoryItem(pickup.name)
@@ -737,7 +725,7 @@ end)
 RegisterServerEvent('esx:unloadAmmo')
 AddEventHandler('esx:unloadAmmo', function(itemName,count)
 	local xPlayer = ESX.GetPlayerFromId(source)
-	local ammoName = ESX.GetWeaponAmmo(itemName)
+	local ammoName = ESX.GetAmmoNameByWeapon(itemName)
 	local totAmmo = xPlayer.getAmmo(itemName)
 
 	if (count > totAmmo and count > 0) then

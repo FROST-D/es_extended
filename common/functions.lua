@@ -33,6 +33,10 @@ ESX.GetWeaponList = function()
 	return Config.Weapons
 end
 
+ESX.GetWeaponAmmoList = function()
+	return Config.WeaponAmmo
+end
+
 ESX.GetAmmoList = function()
 	return Config.Ammos
 end
@@ -48,37 +52,43 @@ ESX.GetWeaponLabel = function(weaponName)
 	end
 end
 
-ESX.GetWeaponAmmo = function(weaponName)
+ESX.GetAmmoNameByWeapon = function(weaponName)
 	weaponName = string.upper(weaponName)
-	local weapons = ESX.GetWeaponList()
-
-	for i=1, #weapons, 1 do
-		if weapons[i].name == weaponName then
-			return weapons[i].ammo
-		end
+	local weapons = ESX.GetWeaponAmmoList()
+	local _t = weapons[weaponName]
+	if _t ~= nil then
+		return _t.ammo
 	end
+	return nil
+end
+
+ESX.GetWeaponAmmo2 = function(weaponName)
+	weaponName = string.upper(weaponName)
+	local weapons = ESX.GetWeaponAmmoList()
+	local _t = weapons[weaponName]
+	if _t then
+		return weapons[weaponName].ammo
+	end
+	return nil
 end
 
 
 ESX.GetAmmoLabel = function(ammoName)
-	ammoName = string.upper(ammoName)
 	local ammos = ESX.GetAmmoList()
-
-	if ammos[ammoName] then
-		return ammos[ammoName].label		
-	else
-		return ammoName
-	end
+	local _t = ammos[ammoName]
+	if _t ~= nil then
+		return ammos[ammoName].label	
+	end	
+	return ammoName
 end
 
 ESX.GetAmmoWeapons = function(ammoName)
 	local ammos = ESX.GetAmmoList()
-
-	if ammos[ammoName] then
-		return ammos[ammoName].weapons		
-	else
-		return ammoName
-	end
+	local _t = ammos[ammoName]
+	if _t ~= nil then
+		return ammos[ammoName].weapons	
+	end	
+	return nil
 end
 
 

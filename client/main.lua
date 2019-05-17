@@ -337,10 +337,6 @@ end)
 
 RegisterNetEvent('esx:pickup')
 AddEventHandler('esx:pickup', function(id, player, coords)
-	print('esx:pickup')
-	print(roundToClosestInt(parseInt(coords.x),2) + 0.95)
-	print(roundToClosestInt(parseInt(coords.y),2) + 0.95)
-	print(roundToClosestInt(parseInt(coords.z),2) + 0.95)
 	local _coords = {
 		x = roundToClosestInt(parseInt(coords.x),2) + 0.95,
 		y = roundToClosestInt(parseInt(coords.y),2) + 0.95, 
@@ -438,6 +434,7 @@ Citizen.CreateThread(function()
 
 		local playerPed      = PlayerPedId()
 		local loadout        = {}
+		local loadoutAmmo 	 = {}
 		local loadoutChanged = false
 
 		if IsPedDeadOrDying(playerPed) then
@@ -453,6 +450,7 @@ Citizen.CreateThread(function()
 			if HasPedGotWeapon(playerPed, weaponHash, false) and weaponName ~= 'WEAPON_UNARMED' then
 				local ammo = GetAmmoInPedWeapon(playerPed, weaponHash)
 				local components = Config.Weapons[i].components
+				local ammoName = ESX.GetWeaponAmmo2(weaponName)
 
 				for j=1, #components, 1 do
 					if HasPedGotWeaponComponent(playerPed, weaponHash, components[j].hash) then
@@ -466,12 +464,17 @@ Citizen.CreateThread(function()
 
 				LastLoadout[weaponName] = ammo
 
+				if ammoName ~= nil then
+					loadoutAmmo[ammoName] = ammo
+				end
+
 				table.insert(loadout, {
 					name = weaponName,
 					ammo = ammo,
 					label = Config.Weapons[i].label,
 					components = weaponComponents,
-					usable = true
+					usable = true,
+					ammoName = ammoName
 				})
 			else
 				if LastLoadout[weaponName] ~= nil then
@@ -485,6 +488,7 @@ Citizen.CreateThread(function()
 
 		if loadoutChanged and LoadoutLoaded then
 			ESX.PlayerData.loadout = loadout
+			ESX.PlayerData.loadoutAmmo = loadoutAmmo
 			TriggerServerEvent('esx:updateLoadout', loadout)
 		end
 
@@ -596,7 +600,6 @@ Citizen.CreateThread(function()
 			local obj = GetClosestObjectOfType(coords,0.8,GetHashKey(Config.DropProp),false,false,false)
 			if (obj ~= nil and obj ~= 0 and not IsPedSittingInAnyVehicle(playerPed)) then
 				-- dio cane e ci sta
-				print("LOOKING FOR OBJECT ID:" .. genCoordId(coords))
 				TriggerServerEvent('esx:onPickup', coords)
 				PlaySoundFrontend(-1, 'PICK_UP', 'HUD_FRONTEND_DEFAULT_SOUNDSET', false)				
 			end
