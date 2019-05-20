@@ -293,6 +293,13 @@ AddEventHandler('esx:updateLoadout', function(loadout)
 	xPlayer.loadout = loadout
 end)
 
+RegisterServerEvent('esx:updateLoadoutAmmo')
+AddEventHandler('esx:updateLoadoutAmmo', function(loadoutAmmo)
+	local xPlayer = ESX.GetPlayerFromId(source)
+	xPlayer.loadoutAmmo = loadoutAmmo
+end)
+
+
 RegisterServerEvent('esx:updateLastPosition')
 AddEventHandler('esx:updateLastPosition', function(position)
 	local xPlayer = ESX.GetPlayerFromId(source)
@@ -377,7 +384,6 @@ end)
 RegisterServerEvent('esx:createPickupTestLockpick')
 AddEventHandler('esx:createPickupTestLockpick', function(coords)
 	local pickupId = genCoordId(coords)
-	local pickupTable = ESX.Pickups[id]
 	ESX.CreatePickup('item_standard', 'lockpick', 1, 'STO CAZZO', source, coords)
 end)
 
@@ -447,7 +453,7 @@ AddEventHandler('esx:removeInventoryItem', function(type, itemName, itemCount, c
 		end
 
 	elseif type == 'item_weapon' then
-		--weapon we drop only the weapon, ammos will be a separate obj
+		--we drop only the weapon, ammos will be a separate obj
 		local xPlayer = ESX.GetPlayerFromId(source)
 		--local loadout = xPlayer.getLoadout()
 		-- for i=1, #loadout, 1 do
@@ -598,30 +604,60 @@ AddEventHandler('esx:onTakeFromPickup', function(coords,itemType,itemName,itemCo
 	local xPlayer = ESX.GetPlayerFromId(_source)
 
 	if pickupTable ~= nil and pickupTable ~= 0 then
-		local totalItems = #pickupTable.items
+		local totalItems = ESX.Table.SizeOf(pickupTable.items)
 	
 		for k,pickup in pairs(pickupTable.items) do
 			if(pickup.name == itemName) then
 				if pickup.type == 'item_standard' or pickup.type == 'item_weapon_packed' or pickup.type == 'item_ammo' then	
 					local item      = xPlayer.getInventoryItem(pickup.name)
-					local canTake   = ((item.limit == -1) and (itemCount)) or ((item.limit - item.count > 0) and (item.limit - item.count)) or 0
-					local total     = itemCount < canTake and itemCount or canTake
-					local remaining = itemCount - total
+					local canTake   = pickup.count
+					local itemLimit = item.limit 
+					print("cantake1")
+					print(canTake)
+					if itemLimit ~= -1 then 
+						if pickup.type == 'item_weapon_packed' and xPlayer.hasWeapon(itemName)  then
+							itemLimit = itemLimit - 1
+						elseif pickup.type == 'item_ammo' and xPlayer.getAmmo2(itemName) > 0  then
+							itemLimit = itemLimit - xPlayer.getAmmo2(itemName)
+						end 
+						if canTake > itemLimit then
+							canTake = itemLimit
+							print("cantake2")
+							
+							print(canTake)
+						end
+						print(canTake - item.count)
+						if canTake - item.count > 0 then
+							canTake = canTake - item.count
+							print("cantake3")
 
+							print(canTake)
+						else
+							canTake = 0
+							print("cantake4")
+
+							print(canTake)
+						end
+					end
+					local total     = itemCount < canTake and itemCount or canTake
+					local remaining = pickup.count - total	
+
+					print("itemLimit : " .. itemLimit )
 					print("canTake : " .. canTake)
 					print("total : " .. total)
 					print("remaining : " .. remaining)
-					if total > 0 then
-						xPlayer.addInventoryItem(pickup.name, total)
-					end
-			
+
 					if remaining > 0 then
-						TriggerClientEvent('esx:showNotification', _source, _U('cannot_pickup_room', item.label))		
-						local pickupLabel = ('~y~%s~s~ [~b~%s~s~]'):format(item.label, remaining)
 						ESX.OverwritePickup(id, pickup.name, remaining, _source)
 					else
 						totalItems = totalItems - 1
 						pickupTable.items[k] = nil
+					end
+
+					if total > 0 then
+						xPlayer.addInventoryItem(pickup.name, total)
+					else
+						TriggerClientEvent('esx:showNotification', _source, _U('cannot_pickup_room', item.label))		
 					end
 				elseif pickup.type == 'item_money' then
 					xPlayer.addMoney(itemCount)
@@ -635,30 +671,6 @@ AddEventHandler('esx:onTakeFromPickup', function(coords,itemType,itemName,itemCo
 					xPlayer.addAccountMoney(pickup.name, itemCount)
 					totalItems = totalItems - 1
 					pickupTable.items[k] = nil
-				elseif pickup.type == 'item_weapon' then
-					print(pickup.name)
-					local item      = xPlayer.getInventoryItem(pickup.name)
-					local canTake   = ((item.limit == -1) and (itemCount)) or ((item.limit - item.count > 0) and (item.limit - item.count)) or 0
-					local total     = itemCount < canTake and itemCount or canTake
-					local remaining = itemCount - total
-
-					print("canTake : " .. canTake)
-					print("total : " .. total)
-					print("remaining : " .. remaining)
-
-
-					if total > 0 then
-						xPlayer.addInventoryItem(pickup.name, total)
-					end
-			
-					if remaining > 0 then
-						TriggerClientEvent('esx:showNotification', _source, _U('cannot_pickup_room', item.label))		
-						local pickupLabel = ('~y~%s~s~ [~b~%s~s~]'):format(item.label, remaining)
-						ESX.OverwritePickup(id, pickup.name, remaining, _source)
-					else
-						totalItems = totalItems - 1
-						pickupTable.items[k] = nil
-					end		
 				end
 				break
 			end
@@ -693,8 +705,8 @@ end)
 --an equipped weapon when used will go back to inventory -- still i must think about ammo
 ESX.RegisterUsableItemType('item_weapon', function(source,itemName)
 	local xPlayer = ESX.GetPlayerFromId(source)
+	xPlayer.removeWeapon(itemName)
 	xPlayer.addInventoryItem(itemName, 1)
-	xPlayer.removeWeapon(itemName, 250)
     TriggerClientEvent('esx:unequipWeapon', source, itemName)
 end)
 --ammo when used will be loaded to player loadout

@@ -222,7 +222,7 @@ AddEventHandler('esx:addWeaponComponent', function(weaponName, weaponComponent)
 end)
 
 RegisterNetEvent('esx:removeWeapon')
-AddEventHandler('esx:removeWeapon', function(weaponName, ammo)
+AddEventHandler('esx:removeWeapon', function(weaponName)
 	local playerPed  = PlayerPedId()
 	local weaponHash = GetHashKey(weaponName)
 
@@ -336,7 +336,7 @@ AddEventHandler('esx:spawnObject', function(model)
 end)
 
 RegisterNetEvent('esx:pickup')
-AddEventHandler('esx:pickup', function(id, player, coords)
+AddEventHandler('esx:pickup', function(pickupId, player, coords)
 	local _coords = {
 		x = roundToClosestInt(parseInt(coords.x),2) + 0.95,
 		y = roundToClosestInt(parseInt(coords.y),2) + 0.95, 
@@ -352,7 +352,7 @@ AddEventHandler('esx:pickup', function(id, player, coords)
 		SetEntityHasGravity(obj, false)
 		FreezeEntityPosition(obj, true)
 
-		Pickups[id] = {
+		Pickups[pickupId] = {
 			coords = coords,
 			obj = obj
 		}
@@ -490,6 +490,7 @@ Citizen.CreateThread(function()
 			ESX.PlayerData.loadout = loadout
 			ESX.PlayerData.loadoutAmmo = loadoutAmmo
 			TriggerServerEvent('esx:updateLoadout', loadout)
+			TriggerServerEvent('esx:updateLoadoutAmmo', loadoutAmmo)
 		end
 
 	end
